@@ -1,0 +1,9 @@
+
+*.xml
+*.iml
+*.pyc
+*.jpg
+*.index
+*.meta
+nmodel/checkpoint
+*.data-00000-of-00001
