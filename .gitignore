@@ -1,0 +1,15 @@
+
+.idea/dictionaries/Alan.xml
+.idea/encodings.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/MyAutonomousVehicleSystem.iml
+.idea/vcs.xml
+*.pyc
+*.meta
+*.index
+*.data-00000-of-00001
+ddpg model/checkpoint
+*.jpg
+nmodel/checkpoint
