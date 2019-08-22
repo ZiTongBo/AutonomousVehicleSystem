@@ -51,10 +51,10 @@ class Vehicle(object):
         return self.x, self.y, self.psi, self.v
 
     def update(self, action):
-        self.x += self.v * cos(self.delta) * dt
-        self.y += self.v * sin(self.delta) * dt
         self.v = action[0] + self.v
         self.delta = (action[1] * pi / 20 + self.delta + 2 * pi) % (2 * pi)
+        self.x += self.v * cos(self.delta) * dt
+        self.y += self.v * sin(self.delta) * dt
         self.set_coordinates()
 
     def set_coordinates(self):

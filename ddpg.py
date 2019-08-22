@@ -16,8 +16,8 @@ gym 0.8.0
 import tensorflow as tf
 import numpy as np
 
-LR_A = 0.001  # learning rate for actor
-LR_C = 0.002  # learning rate for critic
+LR_A = 0.0005  # learning rate for actor
+LR_C = 0.001  # learning rate for critic
 GAMMA = 0.9  # reward discount
 TAU = 0.01  # soft replacement
 MEMORY_CAPACITY = 10000
@@ -98,11 +98,11 @@ class DDPG(object):
     def _build_a(self, s, scope, trainable):
         with tf.variable_scope(scope):
             init_w = tf.random_normal_initializer(0., 0.1)
-            init_b = tf.constant_initializer(0.1)
-            hidden = tf.layers.dense(s, 30, activation=tf.nn.relu, kernel_initializer=init_w,
+            init_b = tf.constant_initializer(0)
+            hidden = tf.layers.dense(s, 30, activation=tf.nn.tanh, kernel_initializer=init_w,
                                      bias_initializer=init_b, name='l1', trainable=trainable)
             # a = tf.layers.dense(net, self.a_dim, name='a', trainable=trainable)
-            hidden = tf.layers.dense(hidden, 60, activation=tf.nn.relu, kernel_initializer=init_w,
+            hidden = tf.layers.dense(hidden, 50, activation=tf.nn.tanh, kernel_initializer=init_w,
                                      bias_initializer=init_b, name='a1', trainable=trainable)
             out = tf.layers.dense(hidden, self.a_dim, activation=tf.nn.tanh, kernel_initializer=init_w,
                                   bias_initializer=init_b, name='a2', trainable=trainable)
@@ -111,15 +111,15 @@ class DDPG(object):
     def _build_c(self, s, a, scope, trainable):
         with tf.variable_scope(scope):
             n_l1 = 30
-            n_l2 = 60
+            n_l2 = 40
             init_w = tf.random_normal_initializer(0., 0.1)
-            init_b = tf.constant_initializer(0.1)
+            init_b = tf.constant_initializer(0)
             w1_s = tf.get_variable('w1_s', [self.s_dim, n_l1], trainable=trainable, initializer=init_w)
             w1_a = tf.get_variable('w1_a', [self.a_dim, n_l1], trainable=trainable, initializer=init_w)
             b1 = tf.get_variable('b1', [1, n_l1], trainable=trainable, initializer=init_b)
             #  net = tf.nn.relu(tf.matmul(s, w1_s) + tf.matmul(a, w1_a) + b1)
-            hidden = tf.nn.relu(tf.matmul(s, w1_s) + tf.matmul(a, w1_a) + b1)
-            hidden = tf.layers.dense(hidden, n_l2, activation=tf.nn.relu, kernel_initializer=init_w,
+            hidden = tf.nn.tanh(tf.matmul(s, w1_s) + tf.matmul(a, w1_a) + b1)
+            hidden = tf.layers.dense(hidden, n_l2, activation=tf.nn.tanh, kernel_initializer=init_w,
                                      bias_initializer=init_b, trainable=trainable, name='net2')
             out = tf.layers.dense(hidden, 1, trainable=trainable, kernel_initializer=init_w,
                                   bias_initializer=init_b, name='net3')  # Q(s,a)

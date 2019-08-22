@@ -21,6 +21,7 @@ LANE_WIDTH = 3.5
 LANE_LENGTH = 100
 MAX_VELOCITY = 30
 UNIT = 20  # 1m=20px
+SYMMETRY = True
 
 
 class AVS(tk.Tk, object):
@@ -28,7 +29,7 @@ class AVS(tk.Tk, object):
         super(AVS, self).__init__()
         # self.action_space = spaces.Box(np.array([-1,-1]),np.array([1,1]))
         self.n_actions = 2
-        self.n_features = 20
+        self.n_features = 19
         self.title('AVS')
         self.geometry('{0}x{1}'.format(LANE_LENGTH * UNIT, int(LANE_WIDTH * UNIT * LANES)))
         self.canvas = tk.Canvas(self, bg='white',
@@ -67,24 +68,24 @@ class AVS(tk.Tk, object):
         mid = np.array([LENGTH / 2, LANE_WIDTH * LANES / 2])
         self.agent1.done = False
         self.agent2.done = False
-        agent1_center = mid + np.array([0, -LANE_WIDTH])
-        self.agent1 = Vehicle(agent1_center[0], agent1_center[1], psi=0, v=16, a=0, delta=0)
+        agent1_center = mid + np.array([3, -LANE_WIDTH])
+        self.agent1 = Vehicle(agent1_center[0], agent1_center[1], psi=0, v=17, a=0, delta=0)
         self.agent1.object = self.canvas.create_polygon(self.agent1.get_four_points(), fill='blue')
 
         agent2_center = mid + np.array([0, LANE_WIDTH])
         self.agent2 = Vehicle(agent2_center[0], agent2_center[1], 0, 15, 0, 0)
         self.agent2.object = self.canvas.create_polygon(self.agent2.get_four_points(), fill='green')
 
-        target1_center = mid + np.array([12, -LANE_WIDTH])
-        self.target1 = Vehicle(target1_center[0], target1_center[1], 0, 15, 0, 0)
+        target1_center = mid + np.array([15, -LANE_WIDTH])
+        self.target1 = Vehicle(target1_center[0], target1_center[1], 0, 12, 0, 0)
         self.target1.object = self.canvas.create_polygon(self.target1.get_four_points(), fill='black')
 
-        target2_center = mid + np.array([12, LANE_WIDTH])
-        self.target2 = Vehicle(target2_center[0], target2_center[1], 0, 15, 0, 0)
+        target2_center = mid + np.array([15, LANE_WIDTH])
+        self.target2 = Vehicle(target2_center[0], target2_center[1], 0, 12, 0, 0)
         self.target2.object = self.canvas.create_polygon(self.target2.get_four_points(), fill='black')
 
         target3_center = mid + np.array([2, 0])
-        self.target3 = Vehicle(target3_center[0], target3_center[1], 0, 15, 0, 0)
+        self.target3 = Vehicle(target3_center[0], target3_center[1], 0, 12, 0, 0)
         self.target3.object = self.canvas.create_polygon(self.target3.get_four_points(), fill='black')
         # self.canvas.create_rectangle(0, 0, LANE_LENGTH * UNIT, 0.2 * UNIT,fill = 'red')
 
@@ -127,15 +128,17 @@ class AVS(tk.Tk, object):
         if self.collision(self.agent1):  # 碰撞惩罚
             reward1 -= 200
             done = True
-        if self.target1.x - self.agent1.x > 40 or self.target1.x > 100 and not self.agent1.done:  # 错失惩罚
+        if (self.target1.x - self.agent1.x > 40 or self.target1.x > 100) and not self.agent1.done:  # 错失惩罚
             reward1 -= 50
             done = True
         if self.collision(self.agent2):
             reward2 -= 200
             done = True
-        if self.target2.x - self.agent2.x > 40 or self.target2.x > 100 and not self.agent2.done:
+        if (self.target2.x - self.agent2.x > 40 or self.target2.x > 100) and not self.agent2.done:
             reward2 -= 50
             done = True
+        # reward1 += 1
+        # reward2 += 1
         reward1 -= min(abs(self.agent1.delta), abs(2 * pi - self.agent1.delta)) / 2  # 转向惩罚
         reward2 -= min(abs(self.agent2.delta), abs(2 * pi - self.agent2.delta)) / 2
         reward1 -= min(abs(tanh(self.agent1.y - LANE_WIDTH / 2)), abs(tanh(self.agent1.y - LANE_WIDTH * 3 / 2)),
@@ -221,9 +224,10 @@ class AVS(tk.Tk, object):
     def render(self):
         self.update()
 
-    def observation(self, agent, symmetry=False):
+    def observation(self, agent):
         if agent == self.agent1:
-            return np.array([self.agent1.x / LANE_LENGTH, self.agent1.y / (LANE_WIDTH * LANES),
+            # return np.array([self.agent1.x / LANE_LENGTH, self.agent1.y / (LANE_WIDTH * LANES),
+            return np.array([self.agent1.y / (LANE_WIDTH * LANES),
                              (self.agent1.x - self.agent2.x) / LANE_LENGTH,
                              (self.agent1.y - self.agent2.y) / (LANE_WIDTH * LANES),
                              (self.agent1.x - self.target1.x) / LANE_LENGTH,
@@ -237,8 +241,8 @@ class AVS(tk.Tk, object):
                              self.target1.v / MAX_VELOCITY, self.target1.delta / (2 * pi),
                              self.target2.v / MAX_VELOCITY, self.target2.delta / (2 * pi),
                              self.target3.v / MAX_VELOCITY, self.target3.delta / (2 * pi)])
-        if agent == self.agent2 and symmetry:
-            return np.array([self.agent2.x / LANE_LENGTH, self.agent2.y / (LANE_WIDTH * LANES),
+        if agent == self.agent2 and SYMMETRY:
+            return np.array([self.agent2.y / (LANE_WIDTH * LANES),
                              (self.agent2.x - self.agent1.x) / LANE_LENGTH,
                              (self.agent2.y - self.agent1.y) / (LANE_WIDTH * LANES),
                              (self.agent2.x - self.target2.x) / LANE_LENGTH,
@@ -253,17 +257,17 @@ class AVS(tk.Tk, object):
                              self.target1.v / MAX_VELOCITY, self.target1.delta / (2 * pi),
                              self.target3.v / MAX_VELOCITY, self.target3.delta / (2 * pi)])
         else:
-            np.array([self.agent2.x / LANE_LENGTH, (LANE_WIDTH * LANES - self.agent2.y) / (LANE_WIDTH * LANES),
-                      (self.agent2.x - self.agent1.x) / LANE_LENGTH,
-                      (-self.agent2.y + self.agent1.y) / (LANE_WIDTH * LANES),
-                      (self.agent2.x - self.target2.x) / LANE_LENGTH,
-                      (-self.agent2.y + self.target2.y) / (LANE_WIDTH * LANES),
-                      (self.agent2.x - self.target1.x) / LANE_LENGTH,
-                      (-self.agent2.y + self.target1.y) / (LANE_WIDTH * LANES),
-                      (self.agent2.x - self.target3.x) / LANE_LENGTH,
-                      (-self.agent2.y + self.target3.y) / (LANE_WIDTH * LANES),
-                      self.agent2.v / MAX_VELOCITY, (2 * pi - self.agent2.delta) % (2 * pi) / (2 * pi),
-                      self.agent1.v / MAX_VELOCITY, (2 * pi - self.agent1.delta) % (2 * pi) / (2 * pi),
-                      self.target2.v / MAX_VELOCITY, self.target2.delta / (2 * pi),
-                      self.target1.v / MAX_VELOCITY, self.target1.delta / (2 * pi),
-                      self.target3.v / MAX_VELOCITY, self.target3.delta / (2 * pi)])
+            return np.array([(LANE_WIDTH * LANES - self.agent2.y) / (LANE_WIDTH * LANES),
+                             (self.agent2.x - self.agent1.x) / LANE_LENGTH,
+                             (-self.agent2.y + self.agent1.y) / (LANE_WIDTH * LANES),
+                             (self.agent2.x - self.target2.x) / LANE_LENGTH,
+                             (-self.agent2.y + self.target2.y) / (LANE_WIDTH * LANES),
+                             (self.agent2.x - self.target1.x) / LANE_LENGTH,
+                             (-self.agent2.y + self.target1.y) / (LANE_WIDTH * LANES),
+                             (self.agent2.x - self.target3.x) / LANE_LENGTH,
+                             (-self.agent2.y + self.target3.y) / (LANE_WIDTH * LANES),
+                             self.agent2.v / MAX_VELOCITY, (2 * pi - self.agent2.delta) % (2 * pi) / (2 * pi),
+                             self.agent1.v / MAX_VELOCITY, (2 * pi - self.agent1.delta) % (2 * pi) / (2 * pi),
+                             self.target2.v / MAX_VELOCITY, self.target2.delta / (2 * pi),
+                             self.target1.v / MAX_VELOCITY, self.target1.delta / (2 * pi),
+                             self.target3.v / MAX_VELOCITY, self.target3.delta / (2 * pi)])
